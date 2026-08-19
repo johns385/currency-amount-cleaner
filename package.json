@@ -1,0 +1,15 @@
+{
+  "name": "currency-amount-cleaner",
+  "version": "0.1.0",
+  "description": "Normalize messy currency amount strings into a canonical cents value.",
+  "type": "module",
+  "main": "src/normalizeAmount.ts",
+  "types": "src/normalizeAmount.ts",
+  "scripts": {
+    "test": "node --experimental-strip-types --test src/*.test.ts"
+  },
+  "engines": {
+    "node": ">=22.6.0"
+  },
+  "license": "MIT"
+}
