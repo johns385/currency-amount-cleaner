@@ -19,6 +19,21 @@ export class AmountParseError extends Error {
   }
 }
 
+// 'us': '.' is the decimal point, ',' is thousands grouping (1,234.56).
+// 'eu': ',' is the decimal point, '.' is thousands grouping (1.234,56).
+export type LocaleHint = 'us' | 'eu';
+
+export interface NormalizeAmountOptions {
+  /**
+   * When a string has a single separator with a digit count that doesn't
+   * disambiguate it (e.g. "1,5" or "1,234"), the parser normally guesses.
+   * Passing a locale hint makes that decision exact instead of guessed, and
+   * also overrides the "rightmost separator is the decimal point" rule used
+   * when both separators are present.
+   */
+  locale?: LocaleHint;
+}
+
 const SYMBOL_TO_CODE: Record<string, string> = {
   '$': 'USD',
   '€': 'EUR',
@@ -33,7 +48,7 @@ const KNOWN_CODES = new Set(['USD', 'EUR', 'GBP', 'JPY', 'CHF', 'CAD', 'AUD', 'C
 
 const NBSP = String.fromCharCode(160);
 
-export function normalizeAmount(raw: string): NormalizedAmount {
+export function normalizeAmount(raw: string, options?: NormalizeAmountOptions): NormalizedAmount {
   const cleaned = raw.split(NBSP).join(' ').trim();
   if (cleaned === '') {
     throw new AmountParseError('cannot parse amount: input is empty');
@@ -43,7 +58,7 @@ export function normalizeAmount(raw: string): NormalizedAmount {
   const { currency, rest: afterCurrency } = extractCurrency(afterSign);
   const numeric = afterCurrency.replace(/[\s_]/g, '');
 
-  const { intPart: rawIntPart, fracPart: rawFracPart } = splitIntegerFraction(numeric);
+  const { intPart: rawIntPart, fracPart: rawFracPart } = splitIntegerFraction(numeric, options?.locale);
 
   if (rawIntPart === '' && rawFracPart === '') {
     throw new AmountParseError(`cannot parse amount: ${JSON.stringify(raw)}`);
@@ -117,14 +132,27 @@ function extractCurrency(input: string): { currency: string | null; rest: string
 }
 
 // Splits a cleaned numeric string into integer and fraction digit strings.
-// The hard part: "1,234" is 1234 in the US and 1.234 in much of Europe, and
-// we get no locale hint from the string itself. When both separators are
+// The hard part: "1,234" is 1234 in the US and 1.234 in much of Europe. If
+// the caller passed a locale hint, the branch above resolves that exactly.
+// Otherwise we're guessing from the string alone. When both separators are
 // present the rightmost one wins as the decimal point (nobody writes
 // "1.234,567.89"). When only one is present and it's followed by exactly
 // three digits, we guess thousands grouping over decimal -- that matches
 // plain whole-dollar amounts ("1,000") far more often than it misreads a
 // genuine three-decimal amount, which is rare for currency.
-function splitIntegerFraction(numStr: string): { intPart: string; fracPart: string } {
+function splitIntegerFraction(numStr: string, locale?: LocaleHint): { intPart: string; fracPart: string } {
+  if (locale) {
+    const decimalChar = locale === 'us' ? '.' : ',';
+    const thousandsChar = locale === 'us' ? ',' : '.';
+    const decimalIndex = numStr.lastIndexOf(decimalChar);
+    if (decimalIndex === -1) {
+      return { intPart: numStr.split(thousandsChar).join(''), fracPart: '' };
+    }
+    const intPart = numStr.slice(0, decimalIndex).split(thousandsChar).join('');
+    const fracPart = numStr.slice(decimalIndex + 1);
+    return { intPart, fracPart };
+  }
+
   const hasComma = numStr.includes(',');
   const hasPeriod = numStr.includes('.');
 

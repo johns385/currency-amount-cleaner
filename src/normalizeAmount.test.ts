@@ -51,3 +51,35 @@ test('throws when there are no digits at all', () => {
 test('throws on stray punctuation with no digits', () => {
   assert.throws(() => normalizeAmount('$-'), AmountParseError);
 });
+
+// Without a hint these are guesses (see splitIntegerFraction). With one,
+// the separator's role is fixed regardless of digit count or position.
+interface LocaleCase {
+  input: string;
+  locale: 'us' | 'eu';
+  expected: Pick<NormalizedAmount, 'cents' | 'currency' | 'negative'>;
+}
+
+const localeCases: LocaleCase[] = [
+  { input: '1,234', locale: 'us', expected: { cents: 123400, currency: null, negative: false } },
+  { input: '1,234', locale: 'eu', expected: { cents: 123, currency: null, negative: false } },
+  { input: '1.234', locale: 'us', expected: { cents: 123, currency: null, negative: false } },
+  { input: '1.234', locale: 'eu', expected: { cents: 123400, currency: null, negative: false } },
+  { input: '1,5', locale: 'us', expected: { cents: 1500, currency: null, negative: false } },
+  { input: '1,5', locale: 'eu', expected: { cents: 150, currency: null, negative: false } },
+  { input: '$1,234.56', locale: 'us', expected: { cents: 123456, currency: 'USD', negative: false } },
+  { input: '1.234.567', locale: 'eu', expected: { cents: 123456700, currency: null, negative: false } },
+];
+
+for (const { input, locale, expected } of localeCases) {
+  test(`normalizeAmount(${JSON.stringify(input)}, { locale: ${JSON.stringify(locale)} })`, () => {
+    const result = normalizeAmount(input, { locale });
+    assert.equal(result.cents, expected.cents);
+    assert.equal(result.currency, expected.currency);
+    assert.equal(result.negative, expected.negative);
+  });
+}
+
+test('locale hint that contradicts the actual format throws instead of misparsing', () => {
+  assert.throws(() => normalizeAmount('1,234.56', { locale: 'eu' }), AmountParseError);
+});

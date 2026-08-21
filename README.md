@@ -43,10 +43,21 @@ normalizeAmount('not an amount');
 // throws AmountParseError
 ```
 
+If you know where the string came from, pass a locale hint to resolve the
+separator ambiguity exactly instead of guessing:
+
+```ts
+normalizeAmount('1,234', { locale: 'us' });
+// { cents: 123400, currency: null, negative: false, formatted: '1234.00' }
+
+normalizeAmount('1,234', { locale: 'eu' });
+// { cents: 123, currency: null, negative: false, formatted: '1.23' }
+```
+
 ## How the ambiguous cases are resolved
 
-There's no locale hint in a bare string, so the parser falls back to rules
-that match the common case over the rare one:
+Without a locale hint there's no signal in a bare string, so the parser
+falls back to rules that match the common case over the rare one:
 
 - If both `,` and `.` appear, the rightmost one is the decimal point and the
   other is a thousands separator (`1.234,56` and `1,234.56` both mean
@@ -57,6 +68,13 @@ that match the common case over the rare one:
   rare currency that prices things to three decimal places.
 - A separator that repeats (`1.234.567`) can only be a thousands separator.
 - Parentheses, a leading `-`, and a trailing `-` all mean negative.
+
+Passing `{ locale: 'us' }` or `{ locale: 'eu' }` skips all of the guessing
+above: the decimal and thousands separator roles are fixed by the hint, so
+`1,5` under `'us'` is 1500 (comma is thousands, digit count doesn't matter)
+and under `'eu'` is 150 (comma is the decimal point). A hint that
+contradicts the actual input (e.g. `{ locale: 'eu' }` on `1,234.56`) throws
+`AmountParseError` rather than silently misreading it.
 
 These rules and their edge cases are what the test suite in
 `src/normalizeAmount.test.ts` is for — it's table-driven specifically so
