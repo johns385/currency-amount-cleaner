@@ -27,6 +27,11 @@ const cases: Case[] = [
   { input: '1.234.567', expected: { cents: 123456700, currency: null, negative: false } },
   { input: '12.3456', expected: { cents: 1235, currency: null, negative: false } },
   { input: '.5', expected: { cents: 50, currency: null, negative: false } },
+  { input: '₩10,000', expected: { cents: 1000000, currency: 'KRW', negative: false } },
+  { input: 'R$5,00', expected: { cents: 500, currency: 'BRL', negative: false } },
+  { input: '5R$', expected: { cents: 500, currency: 'BRL', negative: false } },
+  { input: 'PLN 1,50', expected: { cents: 150, currency: 'PLN', negative: false } },
+  { input: '100 SEK', expected: { cents: 10000, currency: 'SEK', negative: false } },
 ];
 
 for (const { input, expected } of cases) {

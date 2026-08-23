@@ -92,6 +92,7 @@ npm test
 
 ## Status
 
-Early skeleton. Currency detection covers a handful of major symbols and
-codes (USD, EUR, GBP, JPY, CHF, CAD, AUD, CNY, INR); anything else comes
-back with `currency: null` rather than a guess.
+Early skeleton. Currency detection covers major symbols (`$ € £ ¥ ₹ ₩ ₽ ₺ ₫
+₪ ₴ ₦ ฿ R$`) and about 40 ISO codes; anything else comes back with
+`currency: null` rather than a guess. Symbols shared by more than one
+currency in practice (`kr`, `Fr`) are left unmapped on purpose.

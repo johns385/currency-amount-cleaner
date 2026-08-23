@@ -34,17 +34,36 @@ export interface NormalizeAmountOptions {
   locale?: LocaleHint;
 }
 
+// Only symbols that map unambiguously to one currency in practice. "kr" and
+// "Fr" are left out on purpose -- several currencies share them (SEK/NOK/DKK,
+// CHF/XOF/...) and a wrong guess is worse than none.
 const SYMBOL_TO_CODE: Record<string, string> = {
   '$': 'USD',
   '€': 'EUR',
   '£': 'GBP',
   '¥': 'JPY',
   '₹': 'INR',
+  '₩': 'KRW',
+  '₽': 'RUB',
+  '₺': 'TRY',
+  '₫': 'VND',
+  '₪': 'ILS',
+  '₴': 'UAH',
+  '₦': 'NGN',
+  '฿': 'THB',
+  'R$': 'BRL',
 };
 
-// Deliberately small. Extending this is cheap and low-risk; get it wrong and
-// we'd silently mislabel currencies, which is worse than leaving them null.
-const KNOWN_CODES = new Set(['USD', 'EUR', 'GBP', 'JPY', 'CHF', 'CAD', 'AUD', 'CNY', 'INR']);
+// Extending this is cheap and low-risk as long as each code is unambiguous
+// on its own; get it wrong and we'd silently mislabel currencies, which is
+// worse than leaving them null.
+const KNOWN_CODES = new Set([
+  'USD', 'EUR', 'GBP', 'JPY', 'CHF', 'CAD', 'AUD', 'CNY', 'INR',
+  'KRW', 'RUB', 'TRY', 'VND', 'ILS', 'UAH', 'NGN', 'THB', 'BRL',
+  'SEK', 'NOK', 'DKK', 'PLN', 'MXN', 'ZAR', 'SGD', 'HKD', 'NZD',
+  'IDR', 'MYR', 'PHP', 'AED', 'SAR', 'CZK', 'HUF', 'RON', 'EGP',
+  'PKR', 'KES', 'COP', 'ARS', 'CLP', 'PEN', 'BDT',
+]);
 
 const NBSP = String.fromCharCode(160);
 
@@ -119,7 +138,10 @@ function extractCurrency(input: string): { currency: string | null; rest: string
     return { currency: trailingCode[1].toUpperCase(), rest: trimmed.slice(0, trimmed.length - trailingCode[0].length).trim() };
   }
 
-  for (const symbol of Object.keys(SYMBOL_TO_CODE)) {
+  // Longest symbol first, so a multi-char symbol like "R$" is tried before
+  // the bare "$" it contains -- otherwise "5R$" would match "$" alone and
+  // leave a stray "R" behind.
+  for (const symbol of Object.keys(SYMBOL_TO_CODE).sort((a, b) => b.length - a.length)) {
     if (trimmed.startsWith(symbol)) {
       return { currency: SYMBOL_TO_CODE[symbol], rest: trimmed.slice(symbol.length).trim() };
     }
