@@ -227,3 +227,58 @@ function formatCents(cents: number): string {
   const remainder = abs % 100;
   return `${sign}${dollars}.${String(remainder).padStart(2, '0')}`;
 }
+
+// One-way lookup for display: a currency that has an unambiguous symbol in
+// SYMBOL_TO_CODE gets that symbol back; everything else falls back to its
+// ISO code. "R$" comes from the same table, so BRL displays as "R$1.00"
+// rather than "1.00 BRL".
+const CODE_TO_SYMBOL: Record<string, string> = Object.fromEntries(
+  Object.entries(SYMBOL_TO_CODE).map(([symbol, code]) => [code, symbol]),
+);
+
+// Always uses "," for thousands and "." for the decimal point, regardless of
+// where the amount originally came from -- this is a display format for a
+// canonical cents value, not a re-render of the input string, so there's no
+// locale to preserve.
+function groupThousands(digits: string): string {
+  let result = '';
+  for (let i = 0; i < digits.length; i++) {
+    const fromEnd = digits.length - i;
+    if (i > 0 && fromEnd % 3 === 0) {
+      result += ',';
+    }
+    result += digits[i];
+  }
+  return result;
+}
+
+/**
+ * Renders an integer cents value back into a human-facing display string,
+ * e.g. formatCurrency(123456, 'USD') -> "$1,234.56".
+ *
+ * This is the inverse of normalizeAmount in spirit but not in exactness:
+ * normalizeAmount accepts whatever separator convention the input used,
+ * while formatCurrency always emits comma thousands / period decimal, since
+ * the cents value itself carries no memory of where it came from.
+ */
+export function formatCurrency(cents: number, currency?: string | null): string {
+  if (!Number.isInteger(cents)) {
+    throw new AmountParseError(`cannot format amount: cents must be an integer, got ${cents}`);
+  }
+
+  const sign = cents < 0 ? '-' : '';
+  const abs = Math.abs(cents);
+  const dollars = Math.floor(abs / 100);
+  const remainder = abs % 100;
+  const amount = `${groupThousands(String(dollars))}.${String(remainder).padStart(2, '0')}`;
+
+  if (!currency) {
+    return `${sign}${amount}`;
+  }
+
+  const symbol = CODE_TO_SYMBOL[currency];
+  if (symbol) {
+    return `${sign}${symbol}${amount}`;
+  }
+  return `${sign}${amount} ${currency}`;
+}

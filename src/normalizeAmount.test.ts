@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { normalizeAmount, AmountParseError, type NormalizedAmount } from './normalizeAmount.ts';
+import { normalizeAmount, formatCurrency, AmountParseError, type NormalizedAmount } from './normalizeAmount.ts';
 
 interface Case {
   input: string;
@@ -87,4 +87,37 @@ for (const { input, locale, expected } of localeCases) {
 
 test('locale hint that contradicts the actual format throws instead of misparsing', () => {
   assert.throws(() => normalizeAmount('1,234.56', { locale: 'eu' }), AmountParseError);
+});
+
+interface FormatCase {
+  cents: number;
+  currency?: string | null;
+  expected: string;
+}
+
+const formatCases: FormatCase[] = [
+  { cents: 123456, currency: 'USD', expected: '$1,234.56' },
+  { cents: 123456, currency: null, expected: '1,234.56' },
+  { cents: -50000, currency: null, expected: '-500.00' },
+  { cents: 0, currency: 'EUR', expected: '€0.00' },
+  { cents: 500, currency: 'BRL', expected: 'R$5.00' },
+  { cents: 150, currency: 'PLN', expected: '1.50 PLN' },
+  { cents: -150, currency: 'PLN', expected: '-1.50 PLN' },
+  { cents: 100000000, currency: 'USD', expected: '$1,000,000.00' },
+  { cents: 9, currency: undefined, expected: '0.09' },
+];
+
+for (const { cents, currency, expected } of formatCases) {
+  test(`formatCurrency(${cents}, ${JSON.stringify(currency)})`, () => {
+    assert.equal(formatCurrency(cents, currency), expected);
+  });
+}
+
+test('formatCurrency rejects non-integer cents', () => {
+  assert.throws(() => formatCurrency(12.5, 'USD'), AmountParseError);
+});
+
+test('formatCurrency round-trips through normalizeAmount for known symbols', () => {
+  const { cents, currency } = normalizeAmount('$1,234.56');
+  assert.equal(formatCurrency(cents, currency), '$1,234.56');
 });

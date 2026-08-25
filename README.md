@@ -43,6 +43,26 @@ normalizeAmount('not an amount');
 // throws AmountParseError
 ```
 
+`formatCurrency` goes the other direction, turning a cents value back into a
+display string:
+
+```ts
+import { formatCurrency } from './src/normalizeAmount.ts';
+
+formatCurrency(123456, 'USD');
+// '$1,234.56'
+
+formatCurrency(-50000);
+// '-500.00'
+
+formatCurrency(150, 'PLN'); // no symbol mapped, falls back to the ISO code
+// '1.50 PLN'
+```
+
+It always renders comma thousands / period decimal, regardless of what
+separators the original input used -- a cents value carries no memory of
+that, so there's nothing to preserve.
+
 If you know where the string came from, pass a locale hint to resolve the
 separator ambiguity exactly instead of guessing:
 
@@ -96,3 +116,6 @@ Early skeleton. Currency detection covers major symbols (`$ € £ ¥ ₹ ₩ �
 ₪ ₴ ₦ ฿ R$`) and about 40 ISO codes; anything else comes back with
 `currency: null` rather than a guess. Symbols shared by more than one
 currency in practice (`kr`, `Fr`) are left unmapped on purpose.
+
+`formatCurrency` handles the reverse direction, cents back to a display
+string, using the same symbol table.
