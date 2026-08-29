@@ -101,6 +101,13 @@ These rules and their edge cases are what the test suite in
 each awkward input gets its own named case instead of being folded into one
 big assertion.
 
+`src/normalizeAmount.fuzz.test.ts` complements that with a seeded fuzz run
+over thousands of randomly generated, mostly-malformed strings, checking
+that the parser either throws `AmountParseError` or returns a result whose
+`cents`/`negative`/`formatted`/`currency` fields are internally consistent
+and round-trip through `formatted`. It's deterministic (fixed seed), so a
+failure always reproduces.
+
 ## Running the tests
 
 Requires Node 22.6+ for native TypeScript execution — no build step, no
