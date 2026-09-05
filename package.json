@@ -5,11 +5,30 @@
   "type": "module",
   "main": "src/normalizeAmount.ts",
   "types": "src/normalizeAmount.ts",
+  "exports": {
+    ".": "./src/normalizeAmount.ts"
+  },
+  "files": [
+    "src/normalizeAmount.ts"
+  ],
   "scripts": {
     "test": "node --experimental-strip-types --test src/*.test.ts"
   },
   "engines": {
     "node": ">=22.6.0"
+  },
+  "keywords": [
+    "currency",
+    "money",
+    "cents",
+    "parser",
+    "normalize",
+    "amount"
+  ],
+  "author": "johns385",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/johns385/currency-amount-cleaner.git"
   },
   "license": "MIT"
 }
