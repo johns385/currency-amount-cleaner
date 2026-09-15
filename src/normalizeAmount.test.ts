@@ -32,6 +32,8 @@ const cases: Case[] = [
   { input: '5R$', expected: { cents: 500, currency: 'BRL', negative: false } },
   { input: 'PLN 1,50', expected: { cents: 150, currency: 'PLN', negative: false } },
   { input: '100 SEK', expected: { cents: 10000, currency: 'SEK', negative: false } },
+  { input: '(0.00)', expected: { cents: -0, currency: null, negative: true } },
+  { input: '-0.00', expected: { cents: -0, currency: null, negative: true } },
 ];
 
 for (const { input, expected } of cases) {
@@ -105,6 +107,7 @@ const formatCases: FormatCase[] = [
   { cents: -150, currency: 'PLN', expected: '-1.50 PLN' },
   { cents: 100000000, currency: 'USD', expected: '$1,000,000.00' },
   { cents: 9, currency: undefined, expected: '0.09' },
+  { cents: -0, currency: null, expected: '-0.00' },
 ];
 
 for (const { cents, currency, expected } of formatCases) {

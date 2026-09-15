@@ -95,7 +95,7 @@ export function normalizeAmount(raw: string, options?: NormalizeAmountOptions): 
     cents,
     currency,
     negative,
-    formatted: formatCents(cents),
+    formatted: formatCents(cents, negative),
   };
 }
 
@@ -220,8 +220,12 @@ function fractionToCents(frac: string): number {
   return cents;
 }
 
-function formatCents(cents: number): string {
-  const sign = cents < 0 ? '-' : '';
+// Takes the sign as a separate flag rather than reading it off `cents`
+// because "-0.00" (e.g. from "(0.00)") normalizes to a cents value of -0,
+// and -0 < 0 is false in JS -- deriving the sign from the number alone
+// would silently drop it.
+function formatCents(cents: number, negative: boolean): string {
+  const sign = negative ? '-' : '';
   const abs = Math.abs(cents);
   const dollars = Math.floor(abs / 100);
   const remainder = abs % 100;
@@ -266,7 +270,10 @@ export function formatCurrency(cents: number, currency?: string | null): string 
     throw new AmountParseError(`cannot format amount: cents must be an integer, got ${cents}`);
   }
 
-  const sign = cents < 0 ? '-' : '';
+  // Object.is check catches -0, which "cents < 0" misses (-0 < 0 is false
+  // in JS) but which a caller may pass deliberately to mean "negative, zero
+  // amount" -- e.g. round-tripping a value produced by normalizeAmount.
+  const sign = cents < 0 || Object.is(cents, -0) ? '-' : '';
   const abs = Math.abs(cents);
   const dollars = Math.floor(abs / 100);
   const remainder = abs % 100;

@@ -28,3 +28,9 @@ published version to diff against.
 - Seeded fuzz test in `src/normalizeAmount.fuzz.test.ts` checking that the
   parser either throws `AmountParseError` or returns an internally
   consistent, round-trippable result for malformed input.
+
+### Fixed
+
+- `normalizeAmount` and `formatCurrency` now render a leading `-` for
+  negative zero amounts (e.g. `(0.00)`), which previously formatted as
+  `0.00` because `-0 < 0` is `false` in JavaScript.
