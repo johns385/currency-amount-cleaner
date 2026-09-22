@@ -73,9 +73,15 @@ export function normalizeAmount(raw: string, options?: NormalizeAmountOptions): 
     throw new AmountParseError('cannot parse amount: input is empty');
   }
 
-  const { negative, rest: afterSign } = extractSign(cleaned);
+  // Sign notation can sit on either side of the currency marker ("$-5.00",
+  // "USD (500.00)" as well as "-$5.00", "(USD 500.00)"), so we check for it
+  // both before and after stripping the currency, rather than assuming one
+  // fixed order.
+  const { negative: signBefore, rest: afterSign } = extractSign(cleaned);
   const { currency, rest: afterCurrency } = extractCurrency(afterSign);
-  const numeric = afterCurrency.replace(/[\s_]/g, '');
+  const { negative: signAfter, rest: afterSign2 } = extractSign(afterCurrency);
+  const negative = signBefore || signAfter;
+  const numeric = afterSign2.replace(/[\s_]/g, '');
 
   const { intPart: rawIntPart, fracPart: rawFracPart } = splitIntegerFraction(numeric, options?.locale);
 

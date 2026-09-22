@@ -34,6 +34,8 @@ const cases: Case[] = [
   { input: '100 SEK', expected: { cents: 10000, currency: 'SEK', negative: false } },
   { input: '(0.00)', expected: { cents: -0, currency: null, negative: true } },
   { input: '-0.00', expected: { cents: -0, currency: null, negative: true } },
+  { input: '$-5.00', expected: { cents: -500, currency: 'USD', negative: true } },
+  { input: 'USD (500.00)', expected: { cents: -50000, currency: 'USD', negative: true } },
 ];
 
 for (const { input, expected } of cases) {

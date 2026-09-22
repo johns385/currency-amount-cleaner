@@ -34,3 +34,8 @@ published version to diff against.
 - `normalizeAmount` and `formatCurrency` now render a leading `-` for
   negative zero amounts (e.g. `(0.00)`), which previously formatted as
   `0.00` because `-0 < 0` is `false` in JavaScript.
+- `normalizeAmount` now recognizes a negative sign on either side of the
+  currency marker (`$-5.00`, `USD (500.00)`), not just outside it. Sign
+  detection previously ran once on the raw string before the currency was
+  stripped, so a sign written between the currency and the digits fell
+  through to the numeric parser and threw `AmountParseError`.

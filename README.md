@@ -87,7 +87,9 @@ falls back to rules that match the common case over the rare one:
   thousand, not one-point-oh-oh-oh). This is a guess, and it's wrong for the
   rare currency that prices things to three decimal places.
 - A separator that repeats (`1.234.567`) can only be a thousands separator.
-- Parentheses, a leading `-`, and a trailing `-` all mean negative.
+- Parentheses, a leading `-`, and a trailing `-` all mean negative, and any
+  of these can appear on either side of a currency symbol or code
+  (`-$5.00`, `$-5.00`, and `USD (500.00)` are all negative).
 
 Passing `{ locale: 'us' }` or `{ locale: 'eu' }` skips all of the guessing
 above: the decimal and thousands separator roles are fixed by the hint, so
