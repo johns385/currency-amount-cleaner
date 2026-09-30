@@ -94,7 +94,12 @@ export function normalizeAmount(raw: string, options?: NormalizeAmountOptions): 
     throw new AmountParseError(`cannot parse amount: ${JSON.stringify(raw)}`);
   }
 
+  // Past 2^53 the cents value would silently lose precision (or become
+  // Infinity), so refuse it instead of returning a number that is wrong.
   const magnitude = Number(intPart) * 100 + fractionToCents(rawFracPart);
+  if (!Number.isSafeInteger(magnitude)) {
+    throw new AmountParseError(`cannot parse amount: ${JSON.stringify(raw)} is too large to represent exactly in cents`);
+  }
   const cents = negative ? -magnitude : magnitude;
 
   return {

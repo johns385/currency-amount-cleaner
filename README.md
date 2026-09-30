@@ -98,6 +98,10 @@ and under `'eu'` is 150 (comma is the decimal point). A hint that
 contradicts the actual input (e.g. `{ locale: 'eu' }` on `1,234.56`) throws
 `AmountParseError` rather than silently misreading it.
 
+Amounts too large to hold exactly as a JavaScript integer of cents (above
+about 90 trillion in major units) throw `AmountParseError` rather than
+returning a rounded value.
+
 These rules and their edge cases are what the test suite in
 `src/normalizeAmount.test.ts` is for — it's table-driven specifically so
 each awkward input gets its own named case instead of being folded into one

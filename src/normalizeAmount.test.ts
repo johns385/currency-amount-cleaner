@@ -61,6 +61,16 @@ test('throws on stray punctuation with no digits', () => {
   assert.throws(() => normalizeAmount('$-'), AmountParseError);
 });
 
+test('accepts the largest amount that fits in a safe integer of cents', () => {
+  assert.equal(normalizeAmount('90071992547409.91').cents, Number.MAX_SAFE_INTEGER);
+});
+
+test('throws when the amount cannot be held exactly as cents', () => {
+  assert.throws(() => normalizeAmount('90071992547409.92'), AmountParseError);
+  assert.throws(() => normalizeAmount('$999,999,999,999,999,999.00'), AmountParseError);
+  assert.throws(() => normalizeAmount('9'.repeat(400)), AmountParseError);
+});
+
 // Without a hint these are guesses (see splitIntegerFraction). With one,
 // the separator's role is fixed regardless of digit count or position.
 interface LocaleCase {
